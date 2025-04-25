@@ -212,15 +212,25 @@ def post_inline_review_comments(repo_name, pr_number, file_comments, github_toke
         for comment in file_comments_list:
             if comment['start_line'] is not None and comment['start_line'] in line_map:
                 diff_position = line_map[comment['start_line']]
+                
+                # Format the comment with proper GitHub suggestion syntax
                 if comment.get('has_suggestion') and comment.get('suggestion'):
-                    comment_body = f"{comment['body']}\n\n```suggestion\n{comment['suggestion']}\n```"
+                    # Format the suggestion to match GitHub's expected format
+                    suggestion = comment['suggestion'].strip()
+                    # Ensure the suggestion is properly indented
+                    suggestion_lines = suggestion.split('\n')
+                    suggestion = '\n'.join(f'    {line}' for line in suggestion_lines)
+                    
+                    comment_body = f"{comment['body']}\n\n```suggestion\n{suggestion}\n```"
                 else:
                     comment_body = comment['body']
                 
                 comments_for_review.append({
                     'path': filename,
                     'position': diff_position,
-                    'body': comment_body
+                    'body': comment_body,
+                    'line': comment['start_line'],
+                    'side': 'RIGHT'  # Always comment on the right side (new code)
                 })
                 inline_comments_count += 1
             else:
@@ -230,27 +240,49 @@ def post_inline_review_comments(repo_name, pr_number, file_comments, github_toke
                     line_info = ""
                 general_comments.append(f"**{filename} {line_info}:** {comment['body']}")
     
+    # Create the review summary
     review_body = "# 🤖 Go Code Review Bot\n\n"
     
     if inline_comments_count > 0:
         review_body += f"Found {inline_comments_count} issues to comment on.\n\n"
+        review_body += "## Summary of Changes\n\n"
+        
+        # Add a summary of all suggested changes
+        for comment in comments_for_review:
+            if '```suggestion' in comment['body']:
+                suggestion = comment['body'].split('```suggestion')[1].split('```')[0].strip()
+                review_body += f"- **{comment['path']} (Line {comment['line']})**: {comment['body'].split('```suggestion')[0].strip()}\n"
     
     if review_mode == "request_changes":
-        review_body += "⚠️ **Changes requested.** Please address the highlighted issues.\n\n"
+        review_body += "\n⚠️ **Changes requested.** Please address the highlighted issues.\n\n"
     elif review_mode == "approve":
-        review_body += "✅ **Code looks good!** Some minor suggestions provided inline.\n\n"
+        review_body += "\n✅ **Code looks good!** Some minor suggestions provided inline.\n\n"
     else:
-        review_body += "📝 **Code review completed.** See inline comments for details.\n\n"
+        review_body += "\n📝 **Code review completed.** See inline comments for details.\n\n"
     
     # Create the review with all the inline comments
     if comments_for_review:
         for attempt in range(MAX_RETRIES):
             try:
+                # First, create the review with the summary
                 review = pr.create_review(
                     body=review_body,
-                    event=review_event,
-                    comments=comments_for_review
+                    event=review_event
                 )
+                
+                # Then, add each comment individually to ensure proper suggestion formatting
+                for comment in comments_for_review:
+                    try:
+                        review.create_review_comment(
+                            body=comment['body'],
+                            path=comment['path'],
+                            position=comment['position'],
+                            side=comment['side']
+                        )
+                    except Exception as e:
+                        print(f"Error adding individual comment: {str(e)}")
+                        general_comments.append(f"**{comment['path']} (Line {comment['line']}):** {comment['body']}")
+                
                 print(f"Added {len(comments_for_review)} inline comments to PR #{pr_number}")
                 break
             except GithubException as e:
@@ -267,6 +299,7 @@ def post_inline_review_comments(repo_name, pr_number, file_comments, github_toke
                 add_individual_comments(pr, comments_for_review, general_comments)
                 break
     
+    # Add any general comments that couldn't be posted inline
     if general_comments:
         general_comment = "# 🤖 Go Code Review Bot - Additional Comments\n\n"
         if inline_comments_count > 0:
