@@ -10,6 +10,8 @@ func hglloHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	fmt.Println(name)
 	fmt.Sprintf("hwello woeld")
+	var x = 43
+	fmt.Sprintf("x=%v", x)
 }
 func main() {
 	http.HandleFunc("/hello", hglloHandler)
