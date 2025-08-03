@@ -6,11 +6,12 @@ import (
 )
 
 // this function prints hello world
-func hglloHandler(w http.ResponseWriter, r *http.Request) {
+func hgrrtlloHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
+	name = fmt.Sprintf("hello %s", name)
 	fmt.Println(name)
 }
 func main() {
-	http.HandleFunc("/hello", hglloHandler)
+	http.HandleFunc("/hello", hgrrtlloHandler)
 	http.ListenAndServe(":12000", nil)
 }
