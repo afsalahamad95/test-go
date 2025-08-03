@@ -332,6 +332,35 @@ def load_config(config_file):
         print(f"Error loading config file: {str(e)}")
         return default_config
 
+def should_skip_review(repo_name, pr_number, github_token):
+    """Check if the review should be skipped based on commit messages."""
+    try:
+        g = Github(github_token)
+        repo = g.get_repo(repo_name)
+        pr = repo.get_pull(pr_number)
+        
+        # Check the title and body of the PR
+        pr_title = pr.title.lower()
+        pr_body = pr.body.lower() if pr.body else ""
+        
+        # Check all commit messages in the PR
+        for commit in pr.get_commits():
+            commit_message = commit.commit.message.lower()
+            if any(keyword in commit_message for keyword in ['[ignore]', '[skip review]', '[no review]']):
+                print(f"Skipping review due to ignore keyword in commit message: {commit_message}")
+                return True
+        
+        # Also check PR title and body
+        if any(keyword in pr_title or keyword in pr_body for keyword in ['[ignore]', '[skip review]', '[no review]']):
+            print(f"Skipping review due to ignore keyword in PR title/body")
+            return True
+            
+    except Exception as e:
+        print(f"Error checking commit messages: {str(e)}")
+        return False
+    
+    return False
+
 def main():
     parser = argparse.ArgumentParser(description='Review Go code in GitHub PRs')
     parser.add_argument('--repo', required=True, help='GitHub repository in format owner/repo')
@@ -360,6 +389,11 @@ def main():
     if not github_token:
         print("Error: GitHub token not provided. Use --token or set GITHUB_TOKEN env var.")
         sys.exit(1)
+    
+    # Check if we should skip the review
+    if should_skip_review(args.repo, args.pr, github_token):
+        print("Skipping review due to ignore keyword in commit message or PR title/body")
+        return
     
     go_files, pr = get_go_files_from_pr(args.repo, args.pr, github_token, config['max_files'])
     

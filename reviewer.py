@@ -3,7 +3,7 @@ from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 from langchain.schema.runnable import RunnableSequence  # Fixed import for RunnableSequence
 # Step 2: Initialize the Ollama LLM
-llm = OllamaLLM(model="llama3.2")  # Using llama3.2 model
+llm = OllamaLLM(model="llama3.2", base_url="https://afsals-macbook-pro.tailf5cb33.ts.net/ http://localhost:11434")  # Using llama3.2 model
 # Step 3: Define the Go code review prompt template
 go_review_prompt = PromptTemplate(
     input_variables=["code"],  # The variable that will hold the actual code
@@ -28,7 +28,7 @@ For each issue:
 2. Provide a brief explanation of the problem, following the structure given in the image.  Include spelling/grammar issues.
 3. Follow immediately with a GitHub suggestion block like this:
 ```suggestion
-Your improved code here
+Replacement code here
 ```
 
 Example format:
@@ -40,7 +40,7 @@ mutex.Unlock()
 ```
 
 The ```suggestion 
-Your improved code here
+Replacement code here
 
 Go code:
 ```go
