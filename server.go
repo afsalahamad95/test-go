@@ -6,11 +6,11 @@ import (
 )
 
 // this function prints hello world
-func hglloHandler(w http.ResponseWriter, r *http.Request) {
+func hglloHasdfsfndler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
-	fmt.Println(name)
+	fmt.Sprintf("hello %s", name)
 }
 func main() {
-	http.HandleFunc("/hello", hglloHandler)
+	http.HandleFunc("/hello", hglloHasdfsfndler)
 	http.ListenAndServe(":12000", nil)
 }

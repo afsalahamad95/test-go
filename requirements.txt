@@ -4,3 +4,4 @@ pygithub
 python-dotenv
 PyGithub
 flask
+langchain-anthropic

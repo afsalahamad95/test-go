@@ -29,6 +29,6 @@ jobs:
       - name: Run PR Review
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
+          echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
           python github_pr_reviewer.py --repo ${{ github.repository }} --pr ${{ github.event.pull_request.number }} --token ${{ secrets.GITHUB_TOKEN }} 

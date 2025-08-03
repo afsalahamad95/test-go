@@ -3,7 +3,7 @@ from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 from langchain.schema.runnable import RunnableSequence  # Fixed import for RunnableSequence
 # Step 2: Initialize the Ollama LLM
-llm = OllamaLLM(model="llama3.2", base_url="http://100.102.249.77:11434")  # Using llama3.2 model
+llm = OllamaLLM(model="llama3.2", base_url="https://afsals-macbook-pro.tailf5cb33.ts.net/ http://localhost:11434")  # Using llama3.2 model
 # Step 3: Define the Go code review prompt template
 go_review_prompt = PromptTemplate(
     input_variables=["code"],  # The variable that will hold the actual code
